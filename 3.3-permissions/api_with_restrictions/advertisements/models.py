@@ -28,3 +28,16 @@ class Advertisement(models.Model):
     updated_at = models.DateTimeField(
         auto_now=True
     )
+
+
+class Favourites(models.Model):
+
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='favourites')
+    advertisement = models.ForeignKey(Advertisement, on_delete=models.CASCADE, related_name='in_favourites')
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'advertisement'],
+                name='favourite_unique'
+            ),
+        ]

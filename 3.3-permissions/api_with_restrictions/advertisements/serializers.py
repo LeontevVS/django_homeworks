@@ -1,7 +1,8 @@
 from django.contrib.auth.models import User
+from django.forms import ValidationError
 from rest_framework import serializers
 
-from advertisements.models import Advertisement
+from advertisements.models import Advertisement, AdvertisementStatusChoices, Favourites
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -40,6 +41,18 @@ class AdvertisementSerializer(serializers.ModelSerializer):
     def validate(self, data):
         """Метод для валидации. Вызывается при создании и обновлении."""
 
-        # TODO: добавьте требуемую валидацию
-
+        adverts = Advertisement.objects.all().filter(creator=self.context['request'].user, status=AdvertisementStatusChoices.OPEN)
+        if self.context["request"].method == 'POST' and len(adverts) >= 10:
+            raise ValidationError('В статусе "Открыто" может находиться не более 10-ти объявлений')
+        elif len(adverts) >= 10 and data.get('status') == AdvertisementStatusChoices.OPEN:
+            raise ValidationError('В статусе "Открыто" может находиться не более 10-ти объявлений')
         return data
+
+
+class FavouritesSerializer(serializers.ModelSerializer):
+
+    advertisement = AdvertisementSerializer(read_only=True)
+
+    class Meta:
+        model = Favourites
+        fields = ['advertisement']
