@@ -36,7 +36,4 @@ class StockSerializer(serializers.ModelSerializer):
     
     def create_positions(self, positions, stock):
         for position in positions:
-            StockProduct(
-                stock=stock,
-                **position
-            ).save()
+            StockProduct.objects.update_or_create(stock=stock, **position)
