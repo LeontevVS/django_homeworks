@@ -1,7 +1,7 @@
 from django.http import Http404
 from django.shortcuts import get_object_or_404
 from advertisements.filters import AdvertisementFilter
-from advertisements.permissions import IsOwnerOrAdmin
+from advertisements.permissions import IsFavouriteOwner, IsOwnerOrAdmin
 from advertisements.serializers import AdvertisementSerializer, FavouritesSerializer
 from advertisements.models import Advertisement, Favourites
 from rest_framework.permissions import IsAuthenticated
@@ -20,17 +20,17 @@ class AdvertisementViewSet(ModelViewSet):
 
     def get_permissions(self):
         """Получение прав для действий."""
-        if self.action in ["create", "update", "partial_update"]:
+        if self.action in ["create", "update", "partial_update", "destroy"]:
             return [IsAuthenticated(), IsOwnerOrAdmin()]
         return []
     
-    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated, IsOwnerOrAdmin])
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated, IsFavouriteOwner])
     def favourites(self, request):
         queryset = Favourites.objects.all().filter(user=request.user).prefetch_related('advertisement')
         serializer = FavouritesSerializer(queryset, many=True)
         return Response(serializer.data)
 
-    @action(detail=True, methods=['post', 'delete'], permission_classes=[IsAuthenticated, IsOwnerOrAdmin])
+    @action(detail=True, methods=['post', 'delete'], permission_classes=[IsAuthenticated, IsFavouriteOwner])
     def favourite(self, request, pk=None):
         advertisement = get_object_or_404(Advertisement.objects.all(), pk=pk)
         user = request.user
